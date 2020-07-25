@@ -3,6 +3,7 @@ package com.hugobelman.basededatossqlite
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -10,18 +11,26 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val producto = Producto("Camara", 100.0, "Camara ultimo modelo", R.drawable.camara)
-        val producto2 = Producto("PC", 1000.0, "16 GB RAM", R.drawable.pc)
+       var listaProductos = emptyList<Producto>()
 
-        val listaProductos = listOf(producto, producto2)
+        val database = AppDatabase.getDatabase(this)
 
-        val adapter = ProductosAdapter(this, listaProductos)
+        database.productos().getAll().observe(this, Observer {
+            listaProductos = it
 
-        lista.adapter = adapter
+            val adapter = ProductosAdapter(this, listaProductos)
+
+            lista.adapter = adapter
+        })
 
         lista.setOnItemClickListener { parent, view, position, id ->
             val intent = Intent(this, ProductoActivity::class.java)
-            intent.putExtra("producto", listaProductos[position])
+            intent.putExtra("id", listaProductos[position].idProducto)
+            startActivity(intent)
+        }
+
+        floatingActionButton.setOnClickListener {
+            val intent = Intent(this, NuevoProductoActivity::class.java)
             startActivity(intent)
         }
     }
