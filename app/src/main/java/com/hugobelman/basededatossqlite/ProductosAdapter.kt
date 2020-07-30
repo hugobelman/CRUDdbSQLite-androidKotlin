@@ -15,7 +15,10 @@ class ProductosAdapter(private val mContext: Context, private val listaProductos
 
         layout.nombre.text = producto.nombre
         layout.precio.text = "$${producto.precio}"
-        layout.imageView.setImageResource(producto.imagen)
+
+        val imageUri = ImageController.getImageUri(mContext, producto.idProducto.toLong())
+
+        layout.imageView.setImageURI(imageUri)
 
         return layout
     }

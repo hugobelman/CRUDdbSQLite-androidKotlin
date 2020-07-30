@@ -1,5 +1,6 @@
 package com.hugobelman.basededatossqlite
 
+import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -17,6 +18,7 @@ class ProductoActivity : AppCompatActivity() {
     private lateinit var database: AppDatabase
     private lateinit var producto: Producto
     private lateinit var productoLiveData: LiveData<Producto>
+    private val EDIT_ACTIVITY = 49
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +28,9 @@ class ProductoActivity : AppCompatActivity() {
 
         val idProducto = intent.getIntExtra("id", 0)
 
+        val imageUri = ImageController.getImageUri(this, idProducto.toLong())
+        imagen.setImageURI(imageUri)
+
         productoLiveData = database.productos().get(idProducto)
 
         productoLiveData.observe(this, Observer {
@@ -34,7 +39,6 @@ class ProductoActivity : AppCompatActivity() {
             nombre_producto.text = producto.nombre
             precio_producto.text = "$${producto.precio}"
             detalles_producto.text = producto.descripcion
-            imagen.setImageResource(producto.imagen)
         })
     }
 
@@ -49,7 +53,7 @@ class ProductoActivity : AppCompatActivity() {
             R.id.edit_item -> {
                 val intent = Intent(this, NuevoProductoActivity::class.java)
                 intent.putExtra("producto", producto)
-                startActivity(intent)
+                startActivityForResult(intent, EDIT_ACTIVITY)
             }
 
             R.id.delete_item -> {
@@ -57,11 +61,22 @@ class ProductoActivity : AppCompatActivity() {
 
                 CoroutineScope(Dispatchers.IO).launch {
                     database.productos().delete(producto)
+                    ImageController.deleteImage(this@ProductoActivity, producto.idProducto.toLong())
                     this@ProductoActivity.finish()
                 }
             }
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        when {
+            requestCode == EDIT_ACTIVITY && resultCode == Activity.RESULT_OK -> {
+                imagen.setImageURI(data!!.data)
+            }
+        }
     }
 }
